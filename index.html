@@ -114,7 +114,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
       <h3>Mapa por participación electoral</h3>
       <p>Usa la misma lógica territorial y los mismos colores por fuerza ganadora, pero la intensidad de cada circuito depende del porcentaje de participación.</p>
     </div>
-    <div class="sub">Blanco = menor participación · color intenso = mayor participación</div>
+    <div class="sub">Escala reforzada · blanco = menor participación · color intenso = mayor participación</div>
   </div>
   <div id="mapParticipacion"></div>
 </section>
@@ -135,21 +135,32 @@ function hasZeroVotes(p){return(Number(p.Votantes)||0)<=0||(Number(p.Total_Votos
 function filteredRecords(){return records.filter(r=>{const w=state.winner==="__ALL__"||r.ganador===state.winner||(state.winner==="Sin votos"&&hasZeroVotes(r));const s=state.section==="__ALL__"||String(r.Seccion)===state.section;const c=state.cabecera==="__ALL__"||String(r.cabecera_nombre||"")===state.cabecera;const hay=`${r.Circuito} ${r.id_circuito} ${r.cabecera_nombre||""} ${r.departamento_nombre||""}`.toUpperCase();const q=!state.search||hay.includes(state.search);return w&&s&&c&&q})}
 function allowedKeys(){return new Set(filteredRecords().map(r=>norm(r.merge_key)))}
 function passes(p){const w=state.winner==="__ALL__"||p.ganador===state.winner||(state.winner==="Sin votos"&&hasZeroVotes(p));const s=state.section==="__ALL__"||String(p.Seccion||"")===state.section;const c=state.cabecera==="__ALL__"||String(p.cabecera_nombre||"")===state.cabecera;const hay=`${p.Circuito||""} ${p.id_circuito||""} ${p.cabecera_nombre||""} ${p.departamento_nombre||""}`.toUpperCase();const q=!state.search||hay.includes(state.search);const k=norm(p.merge_key||p.merge_target||p.circuit_key||p.circuit_base||p.circuito||p.Circuito);return w&&s&&c&&q&&allowedKeys().has(k)}
-function blendWhiteToRgb(rgb,pct){
-  const t=Math.max(0,Math.min(1,(Number(pct)||0)/100));
-  return rgbToStr([255+(rgb[0]-255)*t,255+(rgb[1]-255)*t,255+(rgb[2]-255)*t]);
+function contrastScale(value,minValue,maxValue){
+  const raw=(Number(value)-minValue)/(maxValue-minValue);
+  const clamped=Math.max(0,Math.min(1,raw));
+  return Math.pow(clamped,1.45);
+}
+function blendWhiteToRgb(rgb,value,minValue,maxValue){
+  const t=contrastScale(value,minValue,maxValue);
+  return rgbToStr([
+    255+(rgb[0]-255)*t,
+    255+(rgb[1]-255)*t,
+    255+(rgb[2]-255)*t
+  ]);
 }
 function featureColor(p){
   if(hasZeroVotes(p))return"#6b7280";
   const meta=partyMeta[p.ganador];
   if(!meta)return"#6b7280";
-  return blendWhiteToRgb(meta.rgb,Number(p.ganador_pct)||0);
+  /* Mayor contraste visual: 35% queda muy claro, 95% queda casi pleno. */
+  return blendWhiteToRgb(meta.rgb,Number(p.ganador_pct)||0,35,95);
 }
 function participationColor(p){
   if(hasZeroVotes(p))return"#6b7280";
   const meta=partyMeta[p.ganador];
   if(!meta)return"#6b7280";
-  return blendWhiteToRgb(meta.rgb,Number(p.Participacion)||0);
+  /* Participación: escala contrastada entre 30% y 90%. */
+  return blendWhiteToRgb(meta.rgb,Number(p.Participacion)||0,30,90);
 }
 const map=L.map("map",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
 const mapParticipacion=L.map("mapParticipacion",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
@@ -197,7 +208,7 @@ function updateLegendParticipacion(){
   legendParticipacion._div.innerHTML=html;
 }
 
-function updateLegend(){let html="<b>Ganador por circuito</b><br>";Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';html+='<div class="muted">Intensidad: porcentaje obtenido por el ganador. Blanco = menor porcentaje; color intenso = mayor porcentaje.</div>';legend._div.innerHTML=html}
+function updateLegend(){let html="<b>Ganador por circuito</b><br>";Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';html+='<div class="muted">Intensidad: porcentaje obtenido por el ganador. Escala reforzada: blanco = menor porcentaje; color intenso = mayor porcentaje.</div>';legend._div.innerHTML=html}
 
 const recenterControl = L.control({position:"topleft"});
 recenterControl.onAdd = function(){
@@ -239,8 +250,10 @@ function lockMapToLayer(targetMap,targetLayer,which){
   const b=targetLayer.getBounds();
   targetMap.fitBounds(b,{padding:[8,8]});
   const currentZoom=targetMap.getZoom();
-  targetMap.setMinZoom(currentZoom);
-  targetMap.setMaxBounds(b.pad(0.18));
+  /* Permite alejar un nivel más para ver Tucumán completo desde más lejos. */
+  targetMap.setMinZoom(Math.max(0,currentZoom-1));
+  /* Mantiene límites amplios: deja aire alrededor, pero evita perder el mapa. */
+  targetMap.setMaxBounds(b.pad(0.65));
   if(which==="principal"){initialBounds=b;}
   if(which==="participacion"){initialBoundsParticipacion=b;}
 }
