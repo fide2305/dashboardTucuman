@@ -114,7 +114,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
       <h3>Mapa por participación electoral</h3>
       <p>Usa la misma lógica territorial y los mismos colores por fuerza ganadora, pero la intensidad de cada circuito depende del porcentaje de participación.</p>
     </div>
-    <div class="sub">Escala reforzada · blanco = menor participación · color intenso = mayor participación</div>
+    <div class="sub">Escala reforzada · base visible · color intenso = mayor participación</div>
   </div>
   <div id="mapParticipacion"></div>
 </section>
@@ -138,10 +138,16 @@ function passes(p){const w=state.winner==="__ALL__"||p.ganador===state.winner||(
 function contrastScale(value,minValue,maxValue){
   const raw=(Number(value)-minValue)/(maxValue-minValue);
   const clamped=Math.max(0,Math.min(1,raw));
-  return Math.pow(clamped,1.45);
+  return Math.pow(clamped,1.18);
 }
-function blendWhiteToRgb(rgb,value,minValue,maxValue){
-  const t=contrastScale(value,minValue,maxValue);
+function blendBaseToRgb(rgb,value,minValue,maxValue,baseStrength){
+  /*
+    La escala ya arranca con color visible.
+    baseStrength evita que los circuitos peleados queden blancos.
+    Luego, a mayor porcentaje, el color se acerca al tono pleno del partido.
+  */
+  const scaled=contrastScale(value,minValue,maxValue);
+  const t=baseStrength+(1-baseStrength)*scaled;
   return rgbToStr([
     255+(rgb[0]-255)*t,
     255+(rgb[1]-255)*t,
@@ -152,15 +158,15 @@ function featureColor(p){
   if(hasZeroVotes(p))return"#6b7280";
   const meta=partyMeta[p.ganador];
   if(!meta)return"#6b7280";
-  /* Mayor contraste visual: 35% queda muy claro, 95% queda casi pleno. */
-  return blendWhiteToRgb(meta.rgb,Number(p.ganador_pct)||0,35,95);
+  /* Ganador: base visible en circuitos peleados; intensidad fuerte en porcentajes altos. */
+  return blendBaseToRgb(meta.rgb,Number(p.ganador_pct)||0,35,95,0.43);
 }
 function participationColor(p){
   if(hasZeroVotes(p))return"#6b7280";
   const meta=partyMeta[p.ganador];
   if(!meta)return"#6b7280";
-  /* Participación: escala contrastada entre 30% y 90%. */
-  return blendWhiteToRgb(meta.rgb,Number(p.Participacion)||0,30,90);
+  /* Participación: también parte de una base visible, pero mantiene contraste. */
+  return blendBaseToRgb(meta.rgb,Number(p.Participacion)||0,30,90,0.36);
 }
 const map=L.map("map",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
 const mapParticipacion=L.map("mapParticipacion",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
@@ -208,7 +214,7 @@ function updateLegendParticipacion(){
   legendParticipacion._div.innerHTML=html;
 }
 
-function updateLegend(){let html="<b>Ganador por circuito</b><br>";Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';html+='<div class="muted">Intensidad: porcentaje obtenido por el ganador. Escala reforzada: blanco = menor porcentaje; color intenso = mayor porcentaje.</div>';legend._div.innerHTML=html}
+function updateLegend(){let html="<b>Ganador por circuito</b><br>";Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';html+='<div class="muted">Intensidad: porcentaje obtenido por el ganador. Escala reforzada: base con color visible en circuitos peleados; color intenso en victorias amplias.</div>';legend._div.innerHTML=html}
 
 const recenterControl = L.control({position:"topleft"});
 recenterControl.onAdd = function(){
