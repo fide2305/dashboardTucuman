@@ -111,6 +111,26 @@ th{position:sticky;top:0;background:#0e151f;color:#a9bdd2;text-transform:upperca
   .participacion-grid{grid-template-columns:1fr}
 }
 
+
+#mapTimelapse{height:830px;width:100%;background:#000}
+.historico-view{display:none}
+.historico-view.active{display:block}
+.historico-grid{display:grid;grid-template-columns:320px 1fr 390px;gap:16px}
+.tl-status{font-size:24px;font-weight:900;margin:8px 0 12px}
+.tl-range{width:100%;margin:8px 0 6px}
+.timeline-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.timeline-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.timeline-buttons button{width:auto;flex:1}
+.bloc-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bloc-tab{width:auto;margin:0;padding:8px 10px;border-radius:999px;border:1px solid #263244;background:#020305;color:#a9bdd2;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.bloc-tab.active{border-color:rgba(0,217,255,.55);background:rgba(0,217,255,.10);color:#fff}
+.hist-note{color:var(--muted);font-size:12px;line-height:1.45;margin-top:8px}
+.hist-seq{font-size:11px;color:#cfe3ff}
+@media(max-width:1300px){
+  #mapTimelapse{height:680px}
+  .historico-grid{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -132,6 +152,7 @@ th{position:sticky;top:0;background:#0e151f;color:#a9bdd2;text-transform:upperca
   <button class="page-tab" data-year="2023">Diputados 2023</button>
   <button class="page-tab" data-year="2021">Diputados 2021</button>
   <button class="page-tab" data-view="participacion">Participación electoral</button>
+  <button class="page-tab" data-view="historico">Timelapse + métricas</button>
 </section>
 
 <section id="electoralView" class="electoral-view">
@@ -209,6 +230,93 @@ th{position:sticky;top:0;background:#0e151f;color:#a9bdd2;text-transform:upperca
   </section>
 </section>
 
+
+<section id="historicoView" class="historico-view">
+  <section class="historico-grid">
+    <aside class="panel">
+      <div class="inner">
+        <h3 class="panel-title">Timelapse electoral</h3>
+        <div class="tl-status" id="tlStatus">2021</div>
+        <input class="tl-range" id="tlRange" type="range" min="0" max="200" value="0" step="1"/>
+        <div class="timeline-labels"><span>2021</span><span>2023</span><span>2025</span></div>
+        <div class="timeline-buttons">
+          <button id="tlPlay">▶ Reproducir</button>
+          <button id="tlPause">⏸ Pausar</button>
+          <button id="tlReset">↺ Reiniciar</button>
+        </div>
+        <p class="hist-note">En el timelapse, los mapas mantienen sus colores originales. Juntos por el Cambio (2021 y 2023) sigue en amarillo claro y Alianza Libertad (2025) en violeta. En las métricas históricas, ambos se cuentan juntos como un mismo bloque de derecha / liberalismo.</p>
+      </div>
+    </aside>
+    <section class="panel">
+      <div id="mapTimelapse"></div>
+    </section>
+    <aside class="panel">
+      <div class="inner">
+        <h3 class="panel-title">Circuitos más variables</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Circuito</th><th>Nombre</th><th>Índice</th><th>Secuencia</th></tr></thead>
+            <tbody id="histVolBody"></tbody>
+          </table>
+        </div>
+        <h3 class="panel-title" style="margin-top:18px">Circuitos más estables</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Circuito</th><th>Nombre</th><th>Índice</th><th>Secuencia</th></tr></thead>
+            <tbody id="histStableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <div class="inner">
+      <h3 class="panel-title">Métricas históricas por fuerza comparable</h3>
+      <div class="bloc-tabs">
+        <button class="bloc-tab active" data-bloc="Frente Tucumán">Frente Tucumán</button>
+        <button class="bloc-tab" data-bloc="Derecha / liberalismo">Derecha / liberalismo</button>
+        <button class="bloc-tab" data-bloc="Fuerza Republicana">Fuerza Republicana</button>
+      </div>
+      <p class="hist-note">Para estas métricas, se comparan 2021 → 2023 → 2025 en puntos porcentuales. “Derecha / liberalismo” suma Juntos por el Cambio (2021 y 2023) y Alianza Libertad (2025).</p>
+      <section class="historico-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <section class="panel">
+          <div class="inner">
+            <h3 class="panel-title">Mayores subas 2021 → 2025</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Circuito</th><th>Nombre</th><th>2021</th><th>2025</th><th>Δ pp</th></tr></thead>
+                <tbody id="histGainBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="inner">
+            <h3 class="panel-title">Mayores caídas 2021 → 2025</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Circuito</th><th>Nombre</th><th>2021</th><th>2025</th><th>Δ pp</th></tr></thead>
+                <tbody id="histLossBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="inner">
+            <h3 class="panel-title">Más sostenidos 2021 → 2025</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Circuito</th><th>Nombre</th><th>2021</th><th>2025</th><th>|Δ| pp</th></tr></thead>
+                <tbody id="histHoldBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </section>
+</section>
+
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -230,6 +338,8 @@ const searchInput=document.getElementById("search");
 const map=L.map("map",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
 const mapParticipacion=L.map("mapParticipacion",{zoomControl:true,attributionControl:false,preferCanvas:false,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
 let layerParticipacion=null;
+const mapTimelapse=L.map("mapTimelapse",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
+let layerTimelapse=null;
 
 const info=L.control();
 info.onAdd=function(){this._div=L.DomUtil.create("div","info");this.update();return this._div};
@@ -270,6 +380,36 @@ recenterControlParticipacion.onAdd=function(){
   return div;
 };
 recenterControlParticipacion.addTo(mapParticipacion);
+
+const infoTimelapse=L.control();
+infoTimelapse.onAdd=function(){this._div=L.DomUtil.create("div","info");this.update();return this._div};
+infoTimelapse.update=function(base){
+  if(!base){this._div.innerHTML="<h4>Timelapse histórico</h4><div>Pasá el mouse sobre el mapa.</div>";return;}
+  const key=base.circuit_key;
+  const rows=histYears.map(y=>{
+    const d=getHistoricalData(key,y);
+    if(!d)return `<div><b>${y}:</b> sin dato</div>`;
+    return `<div><b>${y}:</b> ${d.ganador||"—"} · ${fmt(d.ganador_pct,2)}%</div>`;
+  }).join("");
+  this._div.innerHTML=`<h4>${base.cabecera_nombre||"—"}</h4><div><b>Circuito:</b> ${base.Circuito||"—"}</div><div><b>Departamento:</b> ${base.departamento_nombre||base.Seccion||"—"}</div><div style="margin-top:7px">${rows}</div>`;
+};
+infoTimelapse.addTo(mapTimelapse);
+
+const legendTimelapse=L.control({position:"bottomright"});
+legendTimelapse.onAdd=function(){this._div=L.DomUtil.create("div","legend");return this._div};
+legendTimelapse.addTo(mapTimelapse);
+
+const recenterControlTimelapse=L.control({position:"topleft"});
+recenterControlTimelapse.onAdd=function(){
+  const div=L.DomUtil.create("div","leaflet-control leaflet-control-recenter");
+  const btn=L.DomUtil.create("button","",div);
+  btn.type="button";btn.title="Recentrar mapa";btn.innerHTML="⟳";
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.on(btn,"click",function(e){L.DomEvent.stop(e);if(layerTimelapse)mapTimelapse.fitBounds(layerTimelapse.getBounds(),{padding:[8,8]});});
+  return div;
+};
+recenterControlTimelapse.addTo(mapTimelapse);
+
 
 
 const legend=L.control({position:"bottomright"});
@@ -414,6 +554,187 @@ function renderParticipacionTables(){
   const lowBody=document.getElementById("partLowBody");
   if(topBody)topBody.innerHTML=top.map(p=>`<tr><td>${p.Circuito}</td><td>${p.cabecera_nombre}</td><td>${fmt(p.Participacion,2)}%</td><td>${Number(p.Votantes||0).toLocaleString("es-AR")}</td></tr>`).join("");
   if(lowBody)lowBody.innerHTML=low.map(p=>`<tr><td>${p.Circuito}</td><td>${p.cabecera_nombre}</td><td>${fmt(p.Participacion,2)}%</td><td>${Number(p.Electores||0).toLocaleString("es-AR")}</td></tr>`).join("");
+}
+
+
+const histYears=["2021","2023","2025"];
+const blocPartyByYear={
+  "Frente Tucumán":{"2021":"Frente Tucumán","2023":"Frente Tucumán","2025":"Frente Tucumán"},
+  "Derecha / liberalismo":{"2021":"Juntos por el Cambio","2023":"Juntos por el Cambio","2025":"Alianza Libertad"},
+  "Fuerza Republicana":{"2021":"Fuerza Republicana","2023":"Fuerza Republicana","2025":"Fuerza Republicana"}
+};
+let activeBlocMetric="Frente Tucumán";
+let tlPos=0;
+let tlTimer=null;
+
+function getHistoricalData(key,year){
+  return (electionDatasets[year] && electionDatasets[year].data[key]) ? electionDatasets[year].data[key] : null;
+}
+function shortBlocName(bloc){
+  if(bloc==="Frente Tucumán") return "Frente";
+  if(bloc==="Derecha / liberalismo") return "Derecha";
+  if(bloc==="Fuerza Republicana") return "FR";
+  return bloc || "—";
+}
+function getBlocPct(key,year,bloc){
+  const d=getHistoricalData(key,year);
+  if(!d)return null;
+  const party=blocPartyByYear[bloc][year];
+  const val=Number(d[party+"_pct"]);
+  return isFinite(val)?val:null;
+}
+function getComparableSeries(base){
+  const key=base.circuit_key;
+  const series={};
+  Object.keys(blocPartyByYear).forEach(bloc=>{
+    series[bloc]=histYears.map(y=>getBlocPct(key,y,bloc));
+  });
+  let volatility=0;
+  Object.keys(series).forEach(bloc=>{
+    for(let i=0;i<histYears.length-1;i++){
+      const a=series[bloc][i], b=series[bloc][i+1];
+      if(a!==null && b!==null) volatility += Math.abs(b-a);
+    }
+  });
+  const winnerSeq=histYears.map((y,idx)=>{
+    let bestBloc=null, bestVal=-1;
+    Object.keys(series).forEach(bloc=>{
+      const v=series[bloc][idx];
+      if(v!==null && v>bestVal){bestVal=v;bestBloc=bloc;}
+    });
+    return bestBloc;
+  });
+  return {...base, series, volatility, winnerSeq};
+}
+const historicalComparableRecords=geoData.features.map(f=>getComparableSeries(f.properties));
+
+function renderHistoricalOverview(){
+  const valid=historicalComparableRecords.filter(r=>r.winnerSeq.some(Boolean));
+  const vol=[...valid].sort((a,b)=>b.volatility-a.volatility).slice(0,12);
+  const stable=[...valid].sort((a,b)=>a.volatility-b.volatility).slice(0,12);
+  const volBody=document.getElementById("histVolBody");
+  const stableBody=document.getElementById("histStableBody");
+  if(volBody) volBody.innerHTML=vol.map(r=>`<tr><td>${r.Circuito}</td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.volatility,2)}</td><td class="hist-seq">${r.winnerSeq.map(x=>shortBlocName(x)).join(" → ")}</td></tr>`).join("");
+  if(stableBody) stableBody.innerHTML=stable.map(r=>`<tr><td>${r.Circuito}</td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.volatility,2)}</td><td class="hist-seq">${r.winnerSeq.map(x=>shortBlocName(x)).join(" → ")}</td></tr>`).join("");
+}
+function renderBlocMetrics(bloc=activeBlocMetric){
+  activeBlocMetric=bloc;
+  document.querySelectorAll(".bloc-tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.bloc===bloc));
+  const rows=historicalComparableRecords.map(r=>{
+    const y21=r.series[bloc][0];
+    const y23=r.series[bloc][1];
+    const y25=r.series[bloc][2];
+    const delta=(y21!==null && y25!==null) ? (y25-y21) : null;
+    const hold=(y21!==null && y25!==null) ? Math.abs(y25-y21) : null;
+    const avg=[y21,y23,y25].filter(v=>v!==null);
+    const avgPct=avg.length ? avg.reduce((a,b)=>a+b,0)/avg.length : null;
+    return {...r,y21,y23,y25,delta,hold,avgPct};
+  }).filter(r=>r.delta!==null);
+  const gains=[...rows].sort((a,b)=>b.delta-a.delta).slice(0,12);
+  const losses=[...rows].sort((a,b)=>a.delta-b.delta).slice(0,12);
+  const hold=[...rows].sort((a,b)=>a.hold-b.hold || b.avgPct-a.avgPct).slice(0,12);
+  document.getElementById("histGainBody").innerHTML=gains.map(r=>`<tr><td>${r.Circuito}</td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.y21,2)}%</td><td>${fmt(r.y25,2)}%</td><td>+${fmt(r.delta,2)}</td></tr>`).join("");
+  document.getElementById("histLossBody").innerHTML=losses.map(r=>`<tr><td>${r.Circuito}</td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.y21,2)}%</td><td>${fmt(r.y25,2)}%</td><td>${fmt(r.delta,2)}</td></tr>`).join("");
+  document.getElementById("histHoldBody").innerHTML=hold.map(r=>`<tr><td>${r.Circuito}</td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.y21,2)}%</td><td>${fmt(r.y25,2)}%</td><td>${fmt(r.hold,2)}</td></tr>`).join("");
+}
+function winnerColorRgb(d){
+  if(!d || hasZeroVotes(d) || !partyMeta[d.ganador]) return [107,114,128];
+  const meta=partyMeta[d.ganador];
+  const scaled=contrastScale(Number(d.ganador_pct)||0,35,95);
+  const t=0.43+(1-0.43)*scaled;
+  return [
+    255+(meta.rgb[0]-255)*t,
+    255+(meta.rgb[1]-255)*t,
+    255+(meta.rgb[2]-255)*t
+  ];
+}
+function currentTlSegment(){
+  if(tlPos<=100) return {from:"2021",to:"2023",t:tlPos/100};
+  return {from:"2023",to:"2025",t:(tlPos-100)/100};
+}
+function updateTlStatus(){
+  const seg=currentTlSegment();
+  const label = tlPos===0 ? "2021" : tlPos===100 ? "2023" : tlPos===200 ? "2025" : `${seg.from} → ${seg.to}`;
+  const el=document.getElementById("tlStatus");
+  if(el) el.textContent=label;
+  const range=document.getElementById("tlRange");
+  if(range && Number(range.value)!==Number(tlPos)) range.value=String(tlPos);
+}
+function mixRgbArray(a,b,t){ return [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)]; }
+function styleTimelapse(feature){
+  const key=feature.properties.circuit_key;
+  const seg=currentTlSegment();
+  const d1=getHistoricalData(key,seg.from);
+  const d2=getHistoricalData(key,seg.to) || d1;
+  const z1=!d1 || hasZeroVotes(d1), z2=!d2 || hasZeroVotes(d2);
+  const c1=winnerColorRgb(d1);
+  const c2=winnerColorRgb(d2);
+  const c=mixRgbArray(c1,c2,seg.t);
+  const zero=z1 && z2;
+  return {color:zero?"#9ca3af":"#0a0d12",weight:zero?1.25:1.1,fillColor:rgbToStr(c),fillOpacity:zero?.82:.98};
+}
+function popupTimelapse(base){
+  const key=base.circuit_key;
+  const rows=histYears.map(y=>{
+    const d=getHistoricalData(key,y);
+    if(!d) return `<div class="vote-row"><div class="vote-party">${y}</div><div class="vote-num">—</div><div class="vote-num">s/d</div></div>`;
+    return `<div class="vote-row"><div class="vote-party">${y} · ${d.ganador||"—"}</div><div class="vote-num">${Number(d.Total_Votos_Validos||0).toLocaleString("es-AR")}</div><div class="vote-num">${fmt(d.ganador_pct,2)}%</div></div>`;
+  }).join("");
+  return `<div class="popup-box"><div class="popup-title">${base.cabecera_nombre||"—"}</div><div class="popup-meta"><b>Circuito:</b> ${base.Circuito||"—"}</div><div class="popup-meta"><b>Departamento:</b> ${base.departamento_nombre||base.Seccion||"—"}</div><div class="popup-winner">Secuencia 2021 → 2023 → 2025</div>${rows}</div>`;
+}
+function onEachFeatureTimelapse(feature,layerObj){
+  layerObj.bindPopup(popupTimelapse(feature.properties),{maxWidth:360,minWidth:300,autoPan:true,keepInView:true});
+  layerObj.on({
+    mouseover:e=>{e.target.setStyle({weight:2.2,color:"#ffffff",fillOpacity:1});infoTimelapse.update(e.target.feature.properties)},
+    mouseout:e=>{layerTimelapse.resetStyle(e.target);infoTimelapse.update()},
+    click:e=>mapTimelapse.fitBounds(e.target.getBounds(),{padding:[24,24]})
+  });
+}
+function updateLegendTimelapse(){
+  let html="<b>Timelapse histórico</b><br>";
+  ["Frente Tucumán","Juntos por el Cambio","Alianza Libertad","Fuerza Republicana","Unidos por Tucumán"].forEach(k=>{
+    if(!partyMeta[k]) return;
+    html+=`<div><span class="swatch" style="background:${partyMeta[k].color}"></span>${k}</div>`;
+  });
+  html+='<div><span class="swatch" style="background:#6b7280"></span>Sin datos / sin votos</div>';
+  html+='<div class="muted">En las métricas, Juntos por el Cambio (2021/2023) y Alianza Libertad (2025) se combinan como un único bloque de derecha / liberalismo.</div>';
+  legendTimelapse._div.innerHTML=html;
+}
+function drawTimelapse(){
+  mapTimelapse.invalidateSize(true);
+  if(!layerTimelapse){
+    layerTimelapse=L.geoJSON(geoData,{style:styleTimelapse,onEachFeature:onEachFeatureTimelapse}).addTo(mapTimelapse);
+    const b=layerTimelapse.getBounds();
+    mapTimelapse.fitBounds(b,{padding:[8,8]});
+    const z=mapTimelapse.getZoom();
+    mapTimelapse.setMinZoom(Math.max(0,z-1));
+    mapTimelapse.setMaxBounds(b.pad(.65));
+  }else{
+    layerTimelapse.setStyle(styleTimelapse);
+    layerTimelapse.eachLayer(l=>l.setPopupContent(popupTimelapse(l.feature.properties)));
+  }
+  updateTlStatus();
+  updateLegendTimelapse();
+  renderHistoricalOverview();
+  renderBlocMetrics(activeBlocMetric);
+  setTimeout(()=>{
+    mapTimelapse.invalidateSize(true);
+    if(layerTimelapse){
+      mapTimelapse.fitBounds(layerTimelapse.getBounds(),{padding:[8,8]});
+      layerTimelapse.bringToFront();
+    }
+  },80);
+}
+function stopTimelapse(){
+  if(tlTimer){ clearInterval(tlTimer); tlTimer=null; }
+}
+function playTimelapse(){
+  stopTimelapse();
+  tlTimer=setInterval(()=>{
+    tlPos += 2;
+    if(tlPos>200){ tlPos=200; stopTimelapse(); }
+    drawTimelapse();
+  },120);
 }
 
 function passes(p){
@@ -579,10 +900,14 @@ document.querySelectorAll(".page-tab").forEach(btn=>{
 
     const electoralView=document.getElementById("electoralView");
     const participacionView=document.getElementById("participacionView");
+    const historicoView=document.getElementById("historicoView");
+
+    stopTimelapse();
 
     if(btn.dataset.view==="participacion"){
       electoralView.classList.add("hidden");
       participacionView.classList.add("active");
+      historicoView.classList.remove("active");
       document.getElementById("heroTitle").textContent="Participación electoral";
       document.getElementById("heroText").textContent="Mapa de calor por participación electoral en los circuitos de Tucumán. Tonos fríos indican menor participación y tonos cálidos indican mayor participación.";
       setTimeout(drawParticipacion,80);
@@ -590,6 +915,18 @@ document.querySelectorAll(".page-tab").forEach(btn=>{
       return;
     }
 
+    if(btn.dataset.view==="historico"){
+      electoralView.classList.add("hidden");
+      participacionView.classList.remove("active");
+      historicoView.classList.add("active");
+      document.getElementById("heroTitle").textContent="Timelapse histórico y métricas";
+      document.getElementById("heroText").textContent="Evolución 2021 → 2023 → 2025 con transición progresiva en el mapa. Las métricas históricas combinan Juntos por el Cambio y Alianza Libertad como un mismo bloque de derecha / liberalismo.";
+      setTimeout(drawTimelapse,80);
+      setTimeout(drawTimelapse,260);
+      return;
+    }
+
+    historicoView.classList.remove("active");
     participacionView.classList.remove("active");
     electoralView.classList.remove("hidden");
     currentYear=btn.dataset.year;
@@ -603,6 +940,23 @@ document.querySelectorAll(".page-tab").forEach(btn=>{
 [winnerFilter,sectionFilter,cabeceraFilter,searchInput].forEach(el=>el.oninput=updateAll);
 document.getElementById("reset").onclick=()=>{winnerFilter.value=sectionFilter.value=cabeceraFilter.value="__ALL__";searchInput.value="";updateAll();if(layer)map.fitBounds(layer.getBounds(),{padding:[8,8]});};
 document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>renderSpecial(btn.dataset.table));
+
+
+document.querySelectorAll(".bloc-tab").forEach(btn=>{
+  btn.onclick=()=>renderBlocMetrics(btn.dataset.bloc);
+});
+document.getElementById("tlRange").addEventListener("input",e=>{
+  stopTimelapse();
+  tlPos=Number(e.target.value)||0;
+  drawTimelapse();
+});
+document.getElementById("tlPlay").onclick=()=>playTimelapse();
+document.getElementById("tlPause").onclick=()=>stopTimelapse();
+document.getElementById("tlReset").onclick=()=>{
+  stopTimelapse();
+  tlPos=0;
+  drawTimelapse();
+};
 
 updateAll();
 </script>
