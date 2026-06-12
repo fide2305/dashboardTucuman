@@ -79,10 +79,58 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
 .map-section-title p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.45;}
 .full-map{margin-top:16px;}
 
+
+.page-tabs{
+  display:flex;
+  gap:8px;
+  margin:16px 0;
+  flex-wrap:wrap;
+}
+.page-tab{
+  width:auto;
+  margin:0;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #263244;
+  background:#020305;
+  color:#a9bdd2;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.page-tab.active{
+  border-color:rgba(0,217,255,.65);
+  background:rgba(0,217,255,.12);
+  color:#fff;
+}
+.view-tab{display:none}
+.view-tab.active{display:block}
+.participacion-grid{
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:16px;
+}
+.heat-scale{
+  display:flex;
+  height:12px;
+  border-radius:999px;
+  overflow:hidden;
+  margin:9px 0 6px;
+  background:linear-gradient(90deg,#273469,#2563eb,#06b6d4,#22c55e,#facc15,#f97316,#ef4444);
+}
+.heat-labels{
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-size:11px;
+}
+@media(max-width:1300px){.participacion-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
-<header><div class="wrap top"><div class="brand"><div class="icon">◎</div><div><h1>Mapa Electoral por Circuito</h1><div class="sub">Ganador · doble mapa · intensidad por porcentaje</div></div></div><div class="sub">Circuitos sin votos en gris · límites de mapa · listo para Vercel</div></div></header>
+<header><div class="wrap top"><div class="brand"><div class="icon">◎</div><div><h1>Mapa Electoral por Circuito</h1><div class="sub">Ganador · doble mapa · intensidad por porcentaje</div></div></div><div class="sub">Mapa electoral interactivo</div></div></header>
 <main>
 <section class="hero"><h2>Ganador por porcentaje en cada circuito</h2><p>El color de cada circuito se define por el partido ganador. En el primer mapa, la intensidad va de blanco al color del partido según el porcentaje de votos obtenido por el ganador. En el segundo mapa, la intensidad usa el porcentaje de participación electoral. Los circuitos con 0 votantes o 0 votos válidos aparecen en gris.</p><div class="method"><b>Criterio metodológico:</b> solo se consolidaron subcircuitos sin polígono propio: 0142: 142A, 142B; 0216: 216B, 216C; 0219: 219A; 0228: 228B, 228C, 228D. Los circuitos 0195 y 0196 fueron asignados manualmente a Piedra Buena.</div></section>
 <section class="cards"><div class="card party-card jaldo" style="--party:#59C3FF">
@@ -106,17 +154,37 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
       <div class="small">Ricardo Bussi · promedio ganador 0.0%</div>
     </div></section>
 <section class="cards"><div class="card neutral"><div class="kicker">Polígonos con color</div><div class="value" id="staticMatched">—</div><div class="small">Todos los polígonos con datos</div></div><div class="card neutral"><div class="kicker">Unidades electorales</div><div class="value" id="staticUnits">—</div><div class="small">Solo se consolidaron no-matcheados</div></div><div class="card neutral"><div class="kicker">Circuitos sin votos</div><div class="value" id="staticZero">—</div><div class="small">Se muestran en gris en el mapa</div></div><div class="card neutral"><div class="kicker">Circuitos visibles</div><div class="value" id="cardCircuitos">—</div><div class="small" id="cardCircuitosSub">—</div></div></section>
+
+<section class="page-tabs">
+  <button class="page-tab active" data-view="viewGanador">Ganador por circuito</button>
+  <button class="page-tab" data-view="viewParticipacion">Participación electoral</button>
+</section>
+<section id="viewGanador" class="view-tab active">
 <section class="grid"><aside class="panel"><div class="inner"><h3 class="panel-title">Controles</h3><label>Filtro por ganador</label><select id="winnerFilter"><option value="__ALL__">Todos los ganadores</option><option value="Frente Tucumán">Frente Tucumán · Osvaldo Jaldo</option><option value="Alianza Libertad">Alianza Libertad · Pelli/Catalán</option><option value="Unidos por Tucumán">Unidos por Tucumán · Roberto Sánchez</option><option value="Fuerza Republicana">Fuerza Republicana · Ricardo Bussi</option><option value="Sin votos">Sin votos</option></select><label>Sección</label><select id="section"><option value="__ALL__">Todas</option></select><label>Cabecera / localidad</label><select id="cabecera"><option value="__ALL__">Todas</option></select><label>Buscar circuito o nombre</label><input id="search" placeholder="Ej: Cañada, Piedra Buena, 187"/><button id="reset">Resetear filtros</button></div></aside><section class="panel"><div id="map"></div></section><aside class="panel"><div class="inner"><h3 class="panel-title">Resumen por fuerza</h3><div class="table-wrap"><table><thead><tr><th>Fuerza</th><th>Circuitos</th><th>% total</th><th>Prom. ganador</th></tr></thead><tbody id="summaryBody"></tbody></table></div><h3 class="panel-title" style="margin-top:18px">Top por % ganador</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Nombre</th><th>Ganador</th><th>%</th></tr></thead><tbody id="rankBody"></tbody></table></div></div></aside></section>
 
-<section class="panel full-map">
-  <div class="map-section-title">
-    <div>
-      <h3>Mapa por participación electoral</h3>
-      <p>Usa la misma lógica territorial y los mismos colores por fuerza ganadora, pero la intensidad de cada circuito depende del porcentaje de participación.</p>
-    </div>
-    <div class="sub">Escala reforzada · base visible · color intenso = mayor participación</div>
-  </div>
-  <div id="mapParticipacion"></div>
+
+</section>
+<section id="viewParticipacion" class="view-tab">
+  <section class="participacion-grid">
+    <section class="panel">
+      <div id="mapParticipacion"></div>
+    </section>
+    <aside class="panel">
+      <div class="inner">
+        <h3 class="panel-title">Participación electoral</h3>
+        <div class="heat-scale"></div>
+        <div class="heat-labels"><span>Menor</span><span>Mayor</span></div>
+        <p class="small" style="margin-top:12px">Tonos fríos indican menor participación y tonos cálidos indican mayor participación.</p>
+        <h3 class="panel-title" style="margin-top:18px">Top participación</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Circuito</th><th>Nombre</th><th>%</th></tr></thead>
+            <tbody id="partTopBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+  </section>
 </section>
 <section class="section2"><div class="panel"><div class="inner"><div class="tabs"><button class="tab active" data-table="topPct">Mayor % ganador</button><button class="tab" data-table="tight">Más peleados</button><button class="tab" data-table="topPart">Más participación</button><button class="tab" data-table="lowPart">Menos participación</button><button class="tab" data-table="zeroVotes">Sin votos</button></div><h3 class="panel-title" id="specialTitle">Circuitos con mayor % ganador</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Nombre</th><th>Ganador</th><th>Ganador %</th><th>Participación</th></tr></thead><tbody id="specialBody"></tbody></table></div></div></div><div class="panel"><div class="inner"><h3 class="panel-title">Control de nombres</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Depto.</th><th>Cabecera</th><th>Fuente</th></tr></thead><tbody id="namesBody"></tbody></table></div></div></div></section>
 </main>
@@ -161,12 +229,33 @@ function featureColor(p){
   /* Ganador: base visible en circuitos peleados; intensidad fuerte en porcentajes altos. */
   return blendBaseToRgb(meta.rgb,Number(p.ganador_pct)||0,35,95,0.43);
 }
+function lerp(a,b,t){return a+(b-a)*t}
+function mixRgb(a,b,t){return [lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)]}
+function heatColor(value){
+  const stops=[
+    {v:30,c:[39,52,105]},
+    {v:45,c:[37,99,235]},
+    {v:58,c:[6,182,212]},
+    {v:68,c:[34,197,94]},
+    {v:78,c:[250,204,21]},
+    {v:86,c:[249,115,22]},
+    {v:95,c:[239,68,68]}
+  ];
+  const x=Number(value)||0;
+  if(x<=stops[0].v)return rgbToStr(stops[0].c);
+  if(x>=stops[stops.length-1].v)return rgbToStr(stops[stops.length-1].c);
+  for(let i=0;i<stops.length-1;i++){
+    const a=stops[i],b=stops[i+1];
+    if(x>=a.v && x<=b.v){
+      const t=(x-a.v)/(b.v-a.v);
+      return rgbToStr(mixRgb(a.c,b.c,t));
+    }
+  }
+  return "#6b7280";
+}
 function participationColor(p){
   if(hasZeroVotes(p))return"#6b7280";
-  const meta=partyMeta[p.ganador];
-  if(!meta)return"#6b7280";
-  /* Participación: también parte de una base visible, pero mantiene contraste. */
-  return blendBaseToRgb(meta.rgb,Number(p.Participacion)||0,30,90,0.36);
+  return heatColor(Number(p.Participacion)||0);
 }
 const map=L.map("map",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
 const mapParticipacion=L.map("mapParticipacion",{zoomControl:true,attributionControl:false,preferCanvas:true,maxBoundsViscosity:1.0}).setView([-26.86,-65.22],9);
@@ -182,11 +271,22 @@ function style(feature){
 }
 function styleParticipacion(feature){
   const p=feature.properties||{};
-  if(!passes(p))return{color:"#080b10",weight:.8,fillColor:"#0a0d12",fillOpacity:.16};
   const zero=hasZeroVotes(p);
   return{color:zero?"#9ca3af":"#0a0d12",weight:zero?1.25:1.1,fillColor:participationColor(p),fillOpacity:zero?.82:.98};
 }
 function votesHTML(p){if(hasZeroVotes(p))return`<div class="popup-footer">Hubo 0 votos.</div>`;let html=`<div>`;partyOrder.forEach(([party,votesCol,pctCol])=>{const meta=partyMeta[party]||{};html+=`<div class="vote-row"><span class="vote-party" style="color:${meta.color||"#111"}">${party}</span><span class="vote-num">${fmt(p[votesCol])} votos</span><span class="vote-num">${fmt(p[pctCol],2)}%</span></div>`});html+=`</div>`;return html}
+function popupParticipacion(p){
+  return `<div class="popup-box">
+    <div class="popup-title">${p.cabecera_nombre||"—"}</div>
+    <div class="popup-meta"><b>Circuito:</b> ${p.Circuito||p.merge_key||"—"}</div>
+    <div class="popup-meta"><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div>
+    <div class="popup-winner">Participación electoral</div>
+    <div class="popup-meta"><b>Participación:</b> ${fmt(p.Participacion,2)}%</div>
+    <div class="popup-meta"><b>Votantes:</b> ${Number(p.Votantes||0).toLocaleString("es-AR")}</div>
+    <div class="popup-meta"><b>Electores:</b> ${Number(p.Electores||0).toLocaleString("es-AR")}</div>
+  </div>`;
+}
+
 function popup(p){const meta=partyMeta[p.ganador]||{};if(hasZeroVotes(p)){return`<div class="popup-box"><div class="popup-title">${p.cabecera_nombre||"—"}</div><div class="popup-meta"><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div class="popup-meta"><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div><div class="popup-footer">Hubo 0 votos.</div></div>`}return`<div class="popup-box"><div class="popup-title">${p.cabecera_nombre||"—"}</div><div class="popup-meta"><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div class="popup-meta"><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div><div class="popup-winner" style="color:${meta.color||"#111"}">Ganador: ${p.ganador||"—"} · ${fmt(p.ganador_pct,2)}%</div>${votesHTML(p)}<div class="popup-footer">Participación: ${fmt(p.Participacion,2)}%</div></div>`}
 function hoverContent(p){if(!p)return"<h4>Detalle del circuito</h4><div>Pasá el mouse sobre el mapa.</div>";if(hasZeroVotes(p)){return`<h4>${p.cabecera_nombre||"—"}</h4><div><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div><div style="margin-top:6px;color:#d1d5db"><b>Hubo 0 votos.</b></div>`}let html=`<h4>${p.cabecera_nombre||"—"}</h4><div><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div><b>Ganador:</b> ${p.ganador||"—"} · ${fmt(p.ganador_pct,2)}%</div>`;partyOrder.forEach(([party,votesCol,pctCol])=>{const meta=partyMeta[party]||{};html+=`<div style="color:${meta.color||"#fff"}">${party}: <b>${fmt(p[pctCol],2)}%</b> · ${fmt(p[votesCol])} votos</div>`});return html}
 const info=L.control();info.onAdd=function(){this._div=L.DomUtil.create("div","info");this.update();return this._div};info.update=function(p){this._div.innerHTML=hoverContent(p)};info.addTo(map);
@@ -194,12 +294,13 @@ const legend=L.control({position:"bottomright"});legend.onAdd=function(){this._d
 const infoParticipacion=L.control();
 infoParticipacion.onAdd=function(){this._div=L.DomUtil.create("div","info");this.update();return this._div};
 infoParticipacion.update=function(p){
-  if(!p){this._div.innerHTML="<h4>Detalle del circuito</h4><div>Pasá el mouse sobre el mapa de participación.</div>";return;}
-  if(hasZeroVotes(p)){
-    this._div.innerHTML=`<h4>${p.cabecera_nombre||"—"}</h4><div><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div><div style="margin-top:6px;color:#d1d5db"><b>Hubo 0 votos.</b></div>`;
-    return;
-  }
-  this._div.innerHTML=`<h4>${p.cabecera_nombre||"—"}</h4><div><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div><div><b>Ganador:</b> ${p.ganador||"—"} · ${fmt(p.ganador_pct,2)}%</div><div><b>Participación:</b> ${fmt(p.Participacion,2)}%</div>`;
+  if(!p){this._div.innerHTML="<h4>Participación electoral</h4><div>Pasá el mouse sobre el mapa.</div>";return;}
+  this._div.innerHTML=`<h4>${p.cabecera_nombre||"—"}</h4>
+    <div><b>Código:</b> ${p.Circuito||p.merge_key||"—"}</div>
+    <div><b>Departamento:</b> ${p.departamento_nombre||p.Seccion||"—"}</div>
+    <div style="margin-top:7px"><b>Participación:</b> ${fmt(p.Participacion,2)}%</div>
+    <div><b>Votantes:</b> ${Number(p.Votantes||0).toLocaleString("es-AR")}</div>
+    <div><b>Electores:</b> ${Number(p.Electores||0).toLocaleString("es-AR")}</div>`;
 };
 infoParticipacion.addTo(mapParticipacion);
 
@@ -208,13 +309,18 @@ legendParticipacion.onAdd=function(){this._div=L.DomUtil.create("div","legend");
 legendParticipacion.addTo(mapParticipacion);
 function updateLegendParticipacion(){
   let html="<b>Participación electoral</b><br>";
-  Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k}</div>`});
-  html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';
-  html+='<div class="muted">Intensidad: porcentaje de participación. Blanco = menor participación; color intenso = mayor participación.</div>';
+  html+='<div class="heat-scale"></div>';
+  html+='<div class="heat-labels"><span>Menor</span><span>Mayor</span></div>';
+  html+='<div style="margin-top:8px"><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';
   legendParticipacion._div.innerHTML=html;
 }
 
-function updateLegend(){let html="<b>Ganador por circuito</b><br>";Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';html+='<div class="muted">Intensidad: porcentaje obtenido por el ganador. Escala reforzada: base con color visible en circuitos peleados; color intenso en victorias amplias.</div>';legend._div.innerHTML=html}
+function updateLegend(){
+  let html="<b>Ganador por circuito</b><br>";
+  Object.entries(partyMeta).forEach(([k,v])=>{html+=`<div><span class="swatch" style="background:${v.color}"></span>${k} · ${v.candidate}</div>`});
+  html+='<div><span class="swatch" style="background:#6b7280"></span>Sin votos / 0 votantes</div>';
+  legend._div.innerHTML=html;
+}
 
 const recenterControl = L.control({position:"topleft"});
 recenterControl.onAdd = function(){
@@ -264,7 +370,7 @@ function lockMapToLayer(targetMap,targetLayer,which){
   if(which==="participacion"){initialBoundsParticipacion=b;}
 }
 function onEachFeatureParticipacion(feature,layerObj){
-  layerObj.bindPopup(popup(feature.properties||{}),{maxWidth:360,minWidth:300,autoPan:true,keepInView:true});
+  layerObj.bindPopup(popupParticipacion(feature.properties||{}),{maxWidth:360,minWidth:300,autoPan:true,keepInView:true});
   layerObj.on({
     mouseover:e=>{e.target.setStyle({weight:2.2,color:"#ffffff",fillOpacity:1});infoParticipacion.update(e.target.feature.properties)},
     mouseout:e=>{layerParticipacion.resetStyle(e.target);infoParticipacion.update()},
@@ -277,7 +383,7 @@ function drawParticipacion(){
     lockMapToLayer(mapParticipacion,layerParticipacion,"participacion");
   }else{
     layerParticipacion.setStyle(styleParticipacion);
-    layerParticipacion.eachLayer(l=>l.setPopupContent(popup(l.feature.properties||{})));
+    layerParticipacion.eachLayer(l=>l.setPopupContent(popupParticipacion(l.feature.properties||{})));
   }
   updateLegendParticipacion();
 }
@@ -296,11 +402,40 @@ function updateCards(){const rows=filteredRecords();document.getElementById("car
 function renderSummary(){const body=document.getElementById("summaryBody");body.innerHTML="";summary.forEach(r=>{const tr=document.createElement("tr");tr.innerHTML=`<td style="color:${r.color};font-weight:800">${r.partido}</td><td>${fmt(r.wins)}</td><td>${fmt(r.pct_total,2)}%</td><td>${fmt(r.promedio_ganador_pct,2)}%</td>`;body.appendChild(tr)})}
 function renderTop(){const body=document.getElementById("rankBody");body.innerHTML="";const rows=filteredRecords().filter(r=>!hasZeroVotes(r)).sort((a,b)=>(Number(b.ganador_pct)||0)-(Number(a.ganador_pct)||0)).slice(0,20);rows.forEach(r=>{const meta=partyMeta[r.ganador]||{};const tr=document.createElement("tr");tr.innerHTML=`<td><b>${r.Circuito}</b></td><td>${r.cabecera_nombre||"—"}</td><td style="color:${meta.color||"#fff"};font-weight:800">${r.ganador}</td><td>${fmt(r.ganador_pct,2)}%</td>`;body.appendChild(tr)})}
 function renderSpecial(which="topPct"){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.table===which));document.getElementById("specialTitle").textContent=tableTitles[which];const body=document.getElementById("specialBody");body.innerHTML="";specialTables[which].forEach(r=>{const meta=partyMeta[r.ganador]||{};const tr=document.createElement("tr");const g=hasZeroVotes(r)?"Sin votos":(r.ganador||"—");const color=hasZeroVotes(r)?"#9ca3af":(meta.color||"#fff");tr.innerHTML=`<td><b>${r.Circuito}</b></td><td>${r.cabecera_nombre||"—"}</td><td style="color:${color};font-weight:800">${g}</td><td>${fmt(r.ganador_pct,2)}%</td><td>${fmt(r.Participacion,2)}%</td>`;body.appendChild(tr)})}
+function renderParticipacionTop(){
+  const body=document.getElementById("partTopBody");
+  if(!body)return;
+  const rows=records.filter(r=>!hasZeroVotes(r)).sort((a,b)=>(Number(b.Participacion)||0)-(Number(a.Participacion)||0)).slice(0,14);
+  body.innerHTML="";
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${r.Circuito}</b></td><td>${r.cabecera_nombre||"—"}</td><td>${fmt(r.Participacion,2)}%</td>`;
+    body.appendChild(tr);
+  });
+}
+
 function renderNames(){const body=document.getElementById("namesBody");body.innerHTML="";filteredRecords().slice(0,40).forEach(r=>{const tr=document.createElement("tr");tr.innerHTML=`<td><b>${r.Circuito}</b></td><td>${r.departamento_nombre||"—"}</td><td>${r.cabecera_nombre||"—"}</td><td>${r.fuente_nombre||"—"}</td>`;body.appendChild(tr)})}
-function updateAll(){updateCards();renderTop();renderNames();draw();drawParticipacion()}
+function updateAll(){updateCards();renderTop();renderNames();renderParticipacionTop();draw();drawParticipacion()}
 sections.forEach(s=>{const opt=document.createElement("option");opt.value=s;opt.textContent=s;document.getElementById("section").appendChild(opt)});
 cabeceras.forEach(c=>{const opt=document.createElement("option");opt.value=c;opt.textContent=c;document.getElementById("cabecera").appendChild(opt)});
 document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>renderSpecial(btn.dataset.table));document.getElementById("winnerFilter").onchange=e=>{state.winner=e.target.value;updateAll()};document.getElementById("section").onchange=e=>{state.section=e.target.value;updateAll()};document.getElementById("cabecera").onchange=e=>{state.cabecera=e.target.value;updateAll()};document.getElementById("search").oninput=e=>{state.search=e.target.value.trim().toUpperCase();updateAll()};document.getElementById("reset").onclick=()=>{state.winner="__ALL__";state.section="__ALL__";state.cabecera="__ALL__";state.search="";document.getElementById("winnerFilter").value=state.winner;document.getElementById("section").value=state.section;document.getElementById("cabecera").value=state.cabecera;document.getElementById("search").value="";updateAll();if(layer){map.fitBounds(layer.getBounds(),{padding:[8,8]})}if(layerParticipacion){mapParticipacion.fitBounds(layerParticipacion.getBounds(),{padding:[8,8]})}};
+
+
+document.querySelectorAll(".page-tab").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll(".page-tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".view-tab").forEach(v=>v.classList.remove("active"));
+    btn.classList.add("active");
+    const target=document.getElementById(btn.dataset.view);
+    if(target)target.classList.add("active");
+    setTimeout(()=>{
+      map.invalidateSize();
+      mapParticipacion.invalidateSize();
+      if(layer && btn.dataset.view==="viewGanador")map.fitBounds(layer.getBounds(),{padding:[8,8]});
+      if(layerParticipacion && btn.dataset.view==="viewParticipacion")mapParticipacion.fitBounds(layerParticipacion.getBounds(),{padding:[8,8]});
+    },80);
+  };
+});
 
 renderSummary();renderSpecial("topPct");updateAll();
 </script>
