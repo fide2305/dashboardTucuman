@@ -82,7 +82,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
 </style>
 </head>
 <body>
-<header><div class="wrap top"><div class="brand"><div class="icon">◎</div><div><h1>Mapa Electoral por Circuito</h1><div class="sub">Ganador · intensidad por votos y participación · nombres corregidos</div></div></div><div class="sub">Circuitos sin votos en gris · paleta ajustada · listo para Vercel</div></div></header>
+<header><div class="wrap top"><div class="brand"><div class="icon">◎</div><div><h1>Mapa Electoral por Circuito</h1><div class="sub">Ganador · doble mapa · intensidad por porcentaje</div></div></div><div class="sub">Circuitos sin votos en gris · límites de mapa · listo para Vercel</div></div></header>
 <main>
 <section class="hero"><h2>Ganador por porcentaje en cada circuito</h2><p>El color de cada circuito se define por el partido ganador. En el primer mapa, la intensidad va de blanco al color del partido según el porcentaje de votos obtenido por el ganador. En el segundo mapa, la intensidad usa el porcentaje de participación electoral. Los circuitos con 0 votantes o 0 votos válidos aparecen en gris.</p><div class="method"><b>Criterio metodológico:</b> solo se consolidaron subcircuitos sin polígono propio: 0142: 142A, 142B; 0216: 216B, 216C; 0219: 219A; 0228: 228B, 228C, 228D. Los circuitos 0195 y 0196 fueron asignados manualmente a Piedra Buena.</div></section>
 <section class="cards"><div class="card party-card jaldo" style="--party:#59C3FF">
@@ -107,6 +107,17 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.
     </div></section>
 <section class="cards"><div class="card neutral"><div class="kicker">Polígonos con color</div><div class="value" id="staticMatched">—</div><div class="small">Todos los polígonos con datos</div></div><div class="card neutral"><div class="kicker">Unidades electorales</div><div class="value" id="staticUnits">—</div><div class="small">Solo se consolidaron no-matcheados</div></div><div class="card neutral"><div class="kicker">Circuitos sin votos</div><div class="value" id="staticZero">—</div><div class="small">Se muestran en gris en el mapa</div></div><div class="card neutral"><div class="kicker">Circuitos visibles</div><div class="value" id="cardCircuitos">—</div><div class="small" id="cardCircuitosSub">—</div></div></section>
 <section class="grid"><aside class="panel"><div class="inner"><h3 class="panel-title">Controles</h3><label>Filtro por ganador</label><select id="winnerFilter"><option value="__ALL__">Todos los ganadores</option><option value="Frente Tucumán">Frente Tucumán · Osvaldo Jaldo</option><option value="Alianza Libertad">Alianza Libertad · Pelli/Catalán</option><option value="Unidos por Tucumán">Unidos por Tucumán · Roberto Sánchez</option><option value="Fuerza Republicana">Fuerza Republicana · Ricardo Bussi</option><option value="Sin votos">Sin votos</option></select><label>Sección</label><select id="section"><option value="__ALL__">Todas</option></select><label>Cabecera / localidad</label><select id="cabecera"><option value="__ALL__">Todas</option></select><label>Buscar circuito o nombre</label><input id="search" placeholder="Ej: Cañada, Piedra Buena, 187"/><button id="reset">Resetear filtros</button></div></aside><section class="panel"><div id="map"></div></section><aside class="panel"><div class="inner"><h3 class="panel-title">Resumen por fuerza</h3><div class="table-wrap"><table><thead><tr><th>Fuerza</th><th>Circuitos</th><th>% total</th><th>Prom. ganador</th></tr></thead><tbody id="summaryBody"></tbody></table></div><h3 class="panel-title" style="margin-top:18px">Top por % ganador</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Nombre</th><th>Ganador</th><th>%</th></tr></thead><tbody id="rankBody"></tbody></table></div></div></aside></section>
+
+<section class="panel full-map">
+  <div class="map-section-title">
+    <div>
+      <h3>Mapa por participación electoral</h3>
+      <p>Usa la misma lógica territorial y los mismos colores por fuerza ganadora, pero la intensidad de cada circuito depende del porcentaje de participación.</p>
+    </div>
+    <div class="sub">Blanco = menor participación · color intenso = mayor participación</div>
+  </div>
+  <div id="mapParticipacion"></div>
+</section>
 <section class="section2"><div class="panel"><div class="inner"><div class="tabs"><button class="tab active" data-table="topPct">Mayor % ganador</button><button class="tab" data-table="tight">Más peleados</button><button class="tab" data-table="topPart">Más participación</button><button class="tab" data-table="lowPart">Menos participación</button><button class="tab" data-table="zeroVotes">Sin votos</button></div><h3 class="panel-title" id="specialTitle">Circuitos con mayor % ganador</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Nombre</th><th>Ganador</th><th>Ganador %</th><th>Participación</th></tr></thead><tbody id="specialBody"></tbody></table></div></div></div><div class="panel"><div class="inner"><h3 class="panel-title">Control de nombres</h3><div class="table-wrap"><table><thead><tr><th>Circuito</th><th>Depto.</th><th>Cabecera</th><th>Fuente</th></tr></thead><tbody id="namesBody"></tbody></table></div></div></div></section>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
